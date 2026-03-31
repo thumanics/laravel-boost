@@ -46,7 +46,7 @@ class EditModule extends Tool
                     ->items($schema->string()->description('Format "name:type:required|nullable"'))
                     ->description('Facultatif : Colonnes dont le type change.'),
             ])->description('OBJET REQUIS pour la migration. Ne pas envoyer de texte ici, seulement l\'objet structuré.')
-            ->required(),
+                ->required(),
         ];
     }
 
@@ -70,16 +70,17 @@ class EditModule extends Tool
 
         // Parser la liste complète des champs
         $allFields = $this->parseFields($fieldsStrings);
-        
+
         // Parser les changements structurés
         $changes = [];
-        
+
         if (isset($changesRaw['added']) && is_array($changesRaw['added'])) {
             $changes['added'] = $this->parseFields($changesRaw['added']);
         }
-        
+
         if (isset($changesRaw['renamed']) && is_array($changesRaw['renamed'])) {
             $changes['renamed'] = [];
+
             foreach ($changesRaw['renamed'] as $r) {
                 $changes['renamed'][] = [
                     'old' => $r['old'] ?? ($r['oldName'] ?? ($r['old_name'] ?? ($r['field'] ?? ''))),
@@ -87,10 +88,10 @@ class EditModule extends Tool
                 ];
             }
         }
-        
+
         if (isset($changesRaw['modified']) && is_array($changesRaw['modified'])) {
             $modifiedInputs = [];
-            
+
             foreach ($changesRaw['modified'] as $m) {
                 // Si l'IA a utilisé 'modified' pour un renommage (comportement fréquent)
                 if (isset($m['newName']) || isset($m['new_name']) || isset($m['new'])) {
@@ -103,8 +104,8 @@ class EditModule extends Tool
                     $modifiedInputs[] = $m;
                 }
             }
-            
-            if (!empty($modifiedInputs)) {
+
+            if (! empty($modifiedInputs)) {
                 $changes['modified'] = $this->parseFields($modifiedInputs);
             }
         }
@@ -114,7 +115,7 @@ class EditModule extends Tool
             $service = new ModuleGeneratorService(
                 $app,
                 $moduleName,
-                fields: [], 
+                fields: [],
                 identifierField: 'id',
                 roles: [],
                 dryRun: true
@@ -135,13 +136,14 @@ class EditModule extends Tool
     private function parseFields(array $fieldsInputs): array
     {
         $fields = [];
+
         foreach ($fieldsInputs as $index => $input) {
             // Si l'IA envoie un objet (comportement fréquent)
             if (is_array($input) || is_object($input)) {
                 $input = (array) $input;
-                
+
                 // Cas 1 : Map {"name": "type:flag"} (Vu dans les logs)
-                if (count($input) === 1 && !isset($input['name']) && !isset($input['field'])) {
+                if (count($input) === 1 && ! isset($input['name']) && ! isset($input['field'])) {
                     $name = (string) array_key_first($input);
                     $value = (string) $input[$name];
                     $parts = explode(':', $value, 2);
@@ -150,6 +152,7 @@ class EditModule extends Tool
                         'type' => $parts[0] ?? 'string',
                         'required' => (isset($parts[1]) && str_contains(strtolower($parts[1]), 'required')),
                     ];
+
                     continue;
                 }
 
@@ -159,11 +162,13 @@ class EditModule extends Tool
                     'type' => $input['type'] ?? 'string',
                     'required' => (bool) ($input['required'] ?? (! ($input['nullable'] ?? true))),
                 ];
+
                 continue;
             }
 
             // Sinon on traite comme une chaîne "name:type:required"
             $parts = explode(':', (string) $input, 3);
+
             if (count($parts) < 2) {
                 continue;
             }

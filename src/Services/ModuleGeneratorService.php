@@ -1337,6 +1337,7 @@ PHP;
             foreach ($changes['renamed'] as $change) {
                 $oldName = $change['old'] ?? '';
                 $newName = $change['new'] ?? '';
+
                 if ($oldName && $newName) {
                     $upContent .= "\n            \$table->renameColumn('{$oldName}', '{$newName}');";
                     $downContent .= "\n            \$table->renameColumn('{$newName}', '{$oldName}');";
